@@ -12,8 +12,6 @@
 -- Database Section
 -- ________________ 
 
-create database InfraDon;
-
 -- Tables Section
 -- _____________ 
 
