@@ -1,4 +1,3 @@
--- Active: 1772721152986@@127.0.0.1@5432@infradon
 CREATE SCHEMA IF NOT EXISTS staging;
 
 CREATE TABLE staging.inventaire_mobilier (
@@ -21,9 +20,3 @@ CREATE TABLE staging.fournisseurs (
     entreprise TEXT, contact TEXT, telephone TEXT,
     email TEXT, type_materiel TEXT, remarques TEXT
 );
-
-COPY staging.inventaire_mobilier 
-FROM '/docker-data/inventaire_mobilier.csv'
-WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
-
--- Répéter pour signalements, interventions, fournisseurs_contacts

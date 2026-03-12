@@ -26,4 +26,10 @@ COPY staging.inventaire_mobilier
 FROM '/docker-data/inventaire_mobilier.csv'
 WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
 
--- Répéter pour signalements, interventions, fournisseurs_contacts
+COPY staging.interventions
+FROM '/docker-data/interventions.csv'
+WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
+
+COPY staging.signalements
+FROM '/docker-data/signalements.csv'
+WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
