@@ -13,9 +13,11 @@
 -- ________________ 
 
 create database InfraDon;
-
+ 
 -- Tables Section
 -- _____________ 
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
 
 create table fournisseurs (
      id serial not null,
