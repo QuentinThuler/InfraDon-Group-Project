@@ -1,3 +1,4 @@
+-- Active: 1772721152986@@127.0.0.1@5432@infradon
 CREATE SCHEMA IF NOT EXISTS staging;
 
 CREATE TABLE staging.inventaire_mobilier (
