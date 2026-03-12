@@ -21,3 +21,9 @@ CREATE TABLE staging.fournisseurs (
     entreprise TEXT, contact TEXT, telephone TEXT,
     email TEXT, type_materiel TEXT, remarques TEXT
 );
+
+COPY staging.inventaire_mobilier 
+FROM '/docker-data/inventaire_mobilier.csv'
+WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
+
+-- Répéter pour signalements, interventions, fournisseurs_contacts
