@@ -1,3 +1,4 @@
+-- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
 -- Fichier source : inventaire_mobilier.csv
@@ -68,25 +69,6 @@ SET type =
     CASE LOWER(TRIM(type))
         WHEN 'banc'        THEN 'Banc'
         WHEN 'banc public' THEN 'Banc'
-
-        --WHEN 'fontaine'          THEN 'Fontaine'
-        --WHEN 'fontaine publique' THEN 'Fontaine'
- 
-        --WHEN 'lampadaire' THEN 'Lampadaire'
-        --WHEN 'lampadaire led' THEN 'Lampadaire LED'
-        --WHEN 'lampadaire sodium' THEN 'Lampadaire sodium'
- 
-        --WHEN 'poubelle'  THEN 'Poubelle'
-        --WHEN 'corbeille' THEN 'Poubelle'
-        --WHEN 'poubelle tri' THEN 'Poubelle'
-
-        --WHEN 'borne ev'          THEN 'Borne recharge EV'
-        --WHEN 'borne recharge'    THEN 'Borne recharge EV'
-        --WHEN 'borne recharge ev' THEN 'Borne recharge EV'
- 
-        --WHEN 'panneau'           THEN 'Panneau affichage'
-        --WHEN 'panneau affichage' THEN 'Panneau affichage'
-        --WHEN 'panneau info' THEN 'Panneau info'
         ELSE COALESCE(INITCAP(TRIM(type)), NULL)
     END
 WHERE type IS NOT NULL;
