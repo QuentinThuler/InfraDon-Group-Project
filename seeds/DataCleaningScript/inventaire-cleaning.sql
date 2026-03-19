@@ -1,78 +1,16 @@
--- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
 -- Fichier source : inventaire_mobilier.csv
 -- Base de données : InfraDon (PostgreSQL)
 -- ================================================================
---
--- ANOMALIES DÉTECTÉES DANS LA SOURCE :
---
---  [id]               • Séparateur incohérent : '_' vs '-'  (B_3 / B-001)
---                     • 1 doublon : id='1006' présent 2 fois
---                       (lieu 'Place de la Gare' vs 'place de la gare')
---
---  [type]             • 22 variantes pour 10 valeurs canoniques
---                       (ex: 'banc','Banc','banc public' → 'Banc')
---                     • 'corbeille' → 'Poubelle'
---                     • 'borne EV','Borne recharge' → 'Borne recharge EV'
---                     • 'Panneau','panneau affichage' → 'Panneau affichage'
---
---  [materiau]         • Casse incohérente : 'metal','métal','Métal' → 'Métal'
---                     • 'pierre' vs 'Pierre' → 'Pierre'
---                     • Valeurs erronées : 'LED','sodium' (types de lampe,
---                       pas des matériaux) → NULL
---                     • Vide '' → NULL
---
---  [lieu]             • 'place de la gare' (minuscule) vs 'Place de la Gare'
---
---  [latitude/longitude] • Séparateur décimal virgule ',' au lieu de '.'
---                       • Vide '' → NULL
---
---  [date_installation]• 4 formats coexistent :
---                       DD.MM.YYYY (41 valeurs) | YYYY-MM-DD (27 valeurs)
---                       YYYY seul  (12 valeurs) | mois_FR YYYY (22 valeurs)
---                     • Tous convertis vers ISO 8601 : YYYY-MM-DD
---
---  [etat]             • Tout en minuscules → majuscule initiale
---                       'bon' → 'Bon' | 'usé' → 'Usé'
---                       'à remplacer' → 'À remplacer'
---
---  [remarques]        • Vide '' → NULL
---
--- PIPELINE :
---   ÉTAPE 1  — Création de la table de staging (données brutes)
---   ÉTAPE 2  — Import CSV via COPY
---   ÉTAPE 3  — Nettoyage et standardisation (UPDATE in-place)
---              3a  TRIM global
---              3b  Dédoublonnage sur id
---              3c  Standardisation id          (séparateur '_' → '-')
---              3d  Standardisation type
---              3e  Standardisation materiau
---              3f  Standardisation lieu
---              3g  Standardisation latitude / longitude
---              3h  Standardisation date_installation
---              3i  Standardisation etat
---              3j  Nullification des vides résiduels
---   ÉTAPE 4  — Validation post-nettoyage (requêtes de contrôle)
---   ÉTAPE 5  — Vue de contrôle final
---   ÉTAPE 6  — Transfert vers la table de production
--- ================================================================
+
 
 
 
 -- ================================================================
 -- ÉTAPE 1 — CRÉATION DE LA TABLE DE STAGING
 -- ================================================================
--- Toutes les colonnes sont déclarées en TEXT.
--- Raison : les données brutes contiennent des formats hétérogènes
--- (dates textuelles, virgule comme séparateur décimal, valeurs
--- mixtes...) qui provoqueraient des erreurs de CAST immédiat.
--- On typera proprement lors du transfert en production (étape 6).
---
--- stg_id       : identifiant technique interne d'import
--- stg_source   : traçabilité du fichier source
--- stg_imported : horodatage de l'import
--- ================================================================
+
 
 DROP TABLE IF EXISTS stg_inventaire CASCADE;
 
@@ -93,19 +31,6 @@ CREATE TABLE stg_inventaire (
 -- ================================================================
 -- ÉTAPE 2 — IMPORT CSV DANS LE STAGING
 -- ================================================================
--- Le fichier CSV présente les caractéristiques suivantes :
---   • Encodage : UTF-8 avec BOM (xEF xBB xBF)  → 'UTF8'
---   • Séparateur de colonnes : point-virgule ';'
---   • Séparateur décimal dans lat/lon : virgule ','
---   • Fin de ligne : CRLF (Windows)
---   • Ligne d'en-tête : oui (HEADER true)
---   • 121 lignes de données (dont 1 doublon)
---
--- On liste explicitement les 9 colonnes du CSV pour éviter
--- toute confusion avec les colonnes techniques stg_source et
--- stg_imported qui ont des valeurs DEFAULT et ne doivent pas
--- être alimentées par le COPY.
--- ================================================================
 
 COPY stg_inventaire (id, type, materiau, lieu, latitude, longitude, date_installation, etat, remarques)
 FROM '/docker-data/inventaire_mobilier_clean.csv'
@@ -119,12 +44,7 @@ WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'UTF8');
 -- ----------------------------------------------------------------
 -- 3a — TRIM global
 -- ----------------------------------------------------------------
--- Première opération systématique : suppression des espaces
--- de début et de fin sur toutes les colonnes TEXT.
--- Excel exporte parfois des espaces invisibles autour des valeurs.
--- TRIM() est appliqué avant toute autre transformation pour que
--- les comparaisons CASE WHEN suivantes soient fiables.
--- ----------------------------------------------------------------
+
 
 UPDATE stg_inventaire
 SET
@@ -141,17 +61,7 @@ SET
 -- ----------------------------------------------------------------
 -- ÉTAPE 3 — STANDARDISATION : CASE WHEN + LOWER + TRIM
 -- ----------------------------------------------------------------
--- On passe toute valeur en minuscule (LOWER) pour comparer sans
--- tenir compte de la casse, puis on applique un CASE WHEN exhaustif
--- qui couvre :
---   • toutes les variantes de casse (banc / Banc)
---   • tous les synonymes (banc public, corbeille, borne EV…)
---   • la valeur de repli ELSE avec INITCAP pour les cas imprévus
---
--- On utilise LOWER(TRIM(...)) et non directement la valeur déjà
--- trimmée pour garantir la robustesse même si un TRIM préalable
--- avait été sauté.
--- ----------------------------------------------------------------
+
  
 UPDATE stg_inventaire
 SET type =
@@ -159,25 +69,24 @@ SET type =
         WHEN 'banc'        THEN 'Banc'
         WHEN 'banc public' THEN 'Banc'
 
-        WHEN 'fontaine'          THEN 'Fontaine'
-        WHEN 'fontaine publique' THEN 'Fontaine'
+        --WHEN 'fontaine'          THEN 'Fontaine'
+        --WHEN 'fontaine publique' THEN 'Fontaine'
  
-        WHEN 'lampadaire' THEN 'Lampadaire'
-        WHEN 'lampadaire led' THEN 'Lampadaire LED'
-        WHEN 'lampadaire sodium' THEN 'Lampadaire sodium'
+        --WHEN 'lampadaire' THEN 'Lampadaire'
+        --WHEN 'lampadaire led' THEN 'Lampadaire LED'
+        --WHEN 'lampadaire sodium' THEN 'Lampadaire sodium'
  
-        WHEN 'poubelle'  THEN 'Poubelle'
-        WHEN 'corbeille' THEN 'Poubelle'
-        WHEN 'poubelle tri' THEN 'Poubelle'
+        --WHEN 'poubelle'  THEN 'Poubelle'
+        --WHEN 'corbeille' THEN 'Poubelle'
+        --WHEN 'poubelle tri' THEN 'Poubelle'
 
-        WHEN 'borne ev'          THEN 'Borne recharge EV'
-        WHEN 'borne recharge'    THEN 'Borne recharge EV'
-        WHEN 'borne recharge ev' THEN 'Borne recharge EV'
+        --WHEN 'borne ev'          THEN 'Borne recharge EV'
+        --WHEN 'borne recharge'    THEN 'Borne recharge EV'
+        --WHEN 'borne recharge ev' THEN 'Borne recharge EV'
  
-        WHEN 'panneau'           THEN 'Panneau affichage'
-        WHEN 'panneau affichage' THEN 'Panneau affichage'
-        WHEN 'panneau info' THEN 'Panneau info'
- 
+        --WHEN 'panneau'           THEN 'Panneau affichage'
+        --WHEN 'panneau affichage' THEN 'Panneau affichage'
+        --WHEN 'panneau info' THEN 'Panneau info'
         ELSE COALESCE(INITCAP(TRIM(type)), NULL)
     END
 WHERE type IS NOT NULL;
@@ -188,29 +97,10 @@ DELETE FROM stg_inventaire WHERE type != 'Banc';
 -- ================================================================
 -- STANDARDISATION — colonne `materiau` de stg_inventaire
 -- ================================================================
--- Données brutes observées dans le CSV (121 lignes) :
---
---
+
 -- Valeurs cibles après standardisation :
 --   'Bois' | 'Métal' | NULL
 -- ================================================================
-
--- ----------------------------------------------------------------
--- ÉTAPE 3 — NORMALISATION vers les valeurs canoniques
--- ----------------------------------------------------------------
--- On résout les 3 problèmes restants en un seul passage CASE :
---
---   Problème 1 — Casse mixte :
---     'bois' / 'Bois' → 'Bois'
---     'métal' / 'Métal' → 'Métal'
---
---   Problème 2 — Accent manquant :
---     'metal' (sans accent) → 'Métal'
---
--- LOWER() est appliqué sur la valeur comparée pour rendre
--- le matching insensible à la casse résiduelle.
--- COALESCE garantit que les NULL traversent sans être altérés.
--- ----------------------------------------------------------------
  
 UPDATE stg_inventaire
 SET materiau =
