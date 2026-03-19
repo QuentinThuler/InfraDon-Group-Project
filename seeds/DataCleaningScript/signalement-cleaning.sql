@@ -217,5 +217,5 @@ SET objet =
     END
 WHERE objet IS NOT NULL;
  
--- on garde que les données des banc
+-- on garde que les données de type objet 'Banc' 
 DELETE FROM stg_signalements WHERE objet != 'Banc';
