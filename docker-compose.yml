@@ -13,5 +13,6 @@ services:
       - ./data:/docker-data 
       # Scripts d'initialisation (schéma + données)
       - ./initdb:/docker-entrypoint-initdb.d
+      - ./data:/data
 volumes:
   pgdata:
