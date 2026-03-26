@@ -1,4 +1,4 @@
--- Active: 1772721152986@@127.0.0.1@5432@postgres
+-- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
 -- Fichier source : signalement-cleaning.csv
@@ -162,7 +162,6 @@ SET
 -- trimmée pour garantir la robustesse même si un TRIM préalable
 -- avait été sauté.
 -- ----------------------------------------------------------------
- 
 UPDATE stg_signalements
 SET signale_par =
     CASE LOWER(TRIM(signale_par))
