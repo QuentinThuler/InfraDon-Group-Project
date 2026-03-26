@@ -9,10 +9,6 @@
 -- ********************************************* 
 
 
--- Database Section
--- ________________ 
-
-create database InfraDon;
 -- Tables Section
 -- _____________ 
 DROP SCHEMA public CASCADE;
