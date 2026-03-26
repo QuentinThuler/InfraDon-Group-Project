@@ -1,4 +1,4 @@
--- Active: 1772721152986@@127.0.0.1@5432@postgres
+-- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
 -- Fichier source : signalement-cleaning.csv
@@ -218,4 +218,7 @@ SET objet =
 WHERE objet IS NOT NULL;
  
 -- on garde que les données de type objet 'Banc' 
-DELETE FROM stg_signalements WHERE objet != 'Banc';
+DELETE
+FROM stg_signalements
+WHERE objet NOT LIKE '%banc%'
+   AND objet NOT LIKE '%Banc%';

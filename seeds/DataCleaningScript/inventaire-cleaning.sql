@@ -229,5 +229,3 @@ SET date_installation = CONCAT(
         SPLIT_PART(TRIM(date_installation), ' ', 2), '-12-01'
     )
 WHERE LOWER(TRIM(date_installation)) LIKE 'd_cembre %';
-
-select * from stg_inventaire;

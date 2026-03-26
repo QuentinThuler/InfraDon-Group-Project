@@ -168,4 +168,3 @@ SET cout_materiel =
     END
 WHERE cout_materiel IS NOT NULL;
 
-SELECT * from stg_intervention;

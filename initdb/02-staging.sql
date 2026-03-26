@@ -218,7 +218,10 @@ SET objet =
 WHERE objet IS NOT NULL;
  
 -- on garde que les données de type objet 'Banc' 
-DELETE FROM stg_signalements WHERE objet != 'Banc';
+DELETE
+FROM stg_signalements
+WHERE objet NOT LIKE '%banc%'
+   AND objet NOT LIKE '%Banc%';
 
 
 
