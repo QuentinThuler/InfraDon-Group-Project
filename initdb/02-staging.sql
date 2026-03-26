@@ -1,4 +1,4 @@
--- Active: 1772721397266@@127.0.0.1@5432@infradon
+-- Active: 1772721152986@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
 -- Fichier source : signalement-cleaning.csv
@@ -28,24 +28,24 @@
 --                     • 'banc public' → 'Banc'
 --                     • 'Lampadaire' sans matériaux (LED, sodium) → NULL
 --                     • 'le lampadaire' → 'Lampadaire'
---                     • 'le Lampadaire' → 'Lampadaire'    
---                     • 'lampadaire' → 'Lampadaire'    
---                     • 'led' → 'LED'    
---                     • 'fontaine publique' → 'Fontaine'    
---                     • 'le fontaine publique' → 'Fontaine'    
---                     • 'fontaine' → 'Fontaine'    
---                     • 'le Fontaine' → 'Fontaine'    
---                     • 'poubelle' → 'Poubelle'    
---                     • 'le Poubelle' → 'Poubelle'    
---                     • 'le poubelle tri' → 'Poubelle tri'    
---                     • 'panneau' → 'Panneau'    
---                     • 'le Panneau' → 'Panneau'    
---                     • 'le panneau' → 'Panneau'    
---                     • 'borne' → 'Borne recharge EV'    
---                     • 'borne EV' → 'Borne recharge EV'    
---                     • 'Borne recharge' → 'Borne recharge EV'    
---                     • 'le borne recharge EV' → 'Borne recharge EV'    
---                     • 'le corbeille' → 'Corbeille'    
+--                     • 'le Lampadaire' → 'Lampadaire'
+--                     • 'lampadaire' → 'Lampadaire'
+--                     • 'led' → 'LED'
+--                     • 'fontaine publique' → 'Fontaine'
+--                     • 'le fontaine publique' → 'Fontaine'
+--                     • 'fontaine' → 'Fontaine'
+--                     • 'le Fontaine' → 'Fontaine'
+--                     • 'poubelle' → 'Poubelle'
+--                     • 'le Poubelle' → 'Poubelle'
+--                     • 'le poubelle tri' → 'Poubelle tri'
+--                     • 'panneau' → 'Panneau'
+--                     • 'le Panneau' → 'Panneau'
+--                     • 'le panneau' → 'Panneau'
+--                     • 'borne' → 'Borne recharge EV'
+--                     • 'borne EV' → 'Borne recharge EV'
+--                     • 'Borne recharge' → 'Borne recharge EV'
+--                     • 'le borne recharge EV' → 'Borne recharge EV'
+--                     • 'le corbeille' → 'Corbeille'
 --                     • Vide '' → NULL
 --
 --  [description]      • Pas de normalisation, car cas de figures techniquement infinis.
@@ -73,8 +73,6 @@
 --   ÉTAPE 6  — Transfert vers la table de production
 -- ================================================================
 
-
-
 -- ================================================================
 -- ÉTAPE 1 — CRÉATION DE LA TABLE DE STAGING
 -- ================================================================
@@ -92,15 +90,15 @@
 DROP TABLE IF EXISTS stg_signalements CASCADE;
 
 CREATE TABLE stg_signalements (
-    stg_id             SERIAL PRIMARY KEY,
-    date               TEXT,
-    signale_par        TEXT,
-    objet              TEXT,
-    description        TEXT,
-    urgence            TEXT,
-    statut             TEXT
+    stg_id SERIAL PRIMARY KEY,
+    date TEXT,
+    signal_par TEXT,
+    id_mobilier INT,
+    objet TEXT,
+    description TEXT,
+    urgence TEXT,
+    statut TEXT
 );
-
 
 -- ================================================================
 -- ÉTAPE 2 — IMPORT CSV DANS LE STAGING
@@ -119,10 +117,21 @@ CREATE TABLE stg_signalements (
 -- être alimentées par le COPY.
 -- ================================================================
 
-COPY stg_signalements (date, signale_par, objet, description, urgence, statut)
+COPY stg_signalements (
+    date,
+    signale_par,
+    objet,
+    description,
+    urgence,
+    statut
+)
 FROM '/docker-data/signalements.csv'
-WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'UTF8');
-
+WITH (
+        FORMAT csv,
+        HEADER true,
+        DELIMITER ';',
+        ENCODING 'UTF8'
+    );
 
 -- ================================================================
 -- ÉTAPE 3 — NETTOYAGE ET STANDARDISATION
@@ -140,14 +149,13 @@ WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'UTF8');
 
 UPDATE stg_signalements
 SET
-    date              = TRIM(date),
-    signale_par       = TRIM(signale_par),
-    objet             = TRIM(objet),
-    description       = TRIM(description),
-    urgence           = TRIM(urgence),
-    statut            = TRIM(statut)
-    ;
-    
+    date = TRIM(date),
+    signale_par = TRIM(signale_par),
+    objet = TRIM(objet),
+    description = TRIM(description),
+    urgence = TRIM(urgence),
+    statut = TRIM(statut);
+
 -- ----------------------------------------------------------------
 -- ÉTAPE 3 — STANDARDISATION : CASE WHEN + LOWER + TRIM
 -- ----------------------------------------------------------------
@@ -163,22 +171,24 @@ SET
 -- avait été sauté.
 -- ----------------------------------------------------------------
 UPDATE stg_signalements
-SET signale_par =
-    CASE LOWER(TRIM(signale_par))
-        WHEN 'M. Keller'        THEN 'Mme Keller'
+SET
+    signale_par = CASE LOWER(TRIM(signale_par))
+        WHEN 'M. Keller' THEN 'Mme Keller'
         WHEN 'M. Pereira' THEN 'Mme Pereira'
-
-        WHEN 'un passant'          THEN 'Passant'
+        WHEN 'un passant' THEN 'Passant'
         WHEN 'un habitant' THEN 'Habitant'
         WHEN 'habitant du quartier' THEN 'Habitant quartier'
-
-        ELSE COALESCE(INITCAP(TRIM(signale_par)), NULL)
+        ELSE COALESCE(
+            INITCAP(TRIM(signale_par)),
+            NULL
+        )
     END
-WHERE signale_par IS NOT NULL;
+WHERE
+    signale_par IS NOT NULL;
 
 UPDATE stg_signalements
-SET objet =
-    CASE LOWER(TRIM(objet))
+SET
+    objet = CASE LOWER(TRIM(objet))
         WHEN 'banc' THEN 'Banc'
         WHEN 'banc public' THEN 'Banc'
         WHEN 'le banc' THEN 'Banc'
@@ -205,25 +215,22 @@ SET objet =
         WHEN 'le panneau' THEN 'Panneau affichage'
         WHEN 'panneau affichage' THEN 'Panneau affichage'
         WHEN 'panneau info' THEN 'Panneau info'
-        WHEN 'borne'          THEN 'Borne recharge EV'
-        WHEN 'borne ev'          THEN 'Borne recharge EV'
-        WHEN 'borne recharge'    THEN 'Borne recharge EV'
-        WHEN 'Borne recharge'    THEN 'Borne recharge EV'
+        WHEN 'borne' THEN 'Borne recharge EV'
+        WHEN 'borne ev' THEN 'Borne recharge EV'
+        WHEN 'borne recharge' THEN 'Borne recharge EV'
+        WHEN 'Borne recharge' THEN 'Borne recharge EV'
         WHEN 'borne recharge ev' THEN 'Borne recharge EV'
         WHEN 'le borne recharge ev' THEN 'Borne recharge EV'
-
         ELSE COALESCE(INITCAP(TRIM(objet)), NULL)
     END
-WHERE objet IS NOT NULL;
- 
--- on garde que les données de type objet 'Banc' 
-DELETE
-FROM stg_signalements
-WHERE objet NOT LIKE '%banc%'
-   AND objet NOT LIKE '%Banc%';
+WHERE
+    objet IS NOT NULL;
 
-
-
+-- on garde que les données de type objet 'Banc'
+DELETE FROM stg_signalements
+WHERE
+    objet NOT LIKE '%banc%'
+    AND objet NOT LIKE '%Banc%';
 
 -- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
@@ -232,38 +239,47 @@ WHERE objet NOT LIKE '%banc%'
 -- Base de données : InfraDon (PostgreSQL)
 -- ================================================================
 
-
-
-
 -- ================================================================
 -- ÉTAPE 1 — CRÉATION DE LA TABLE DE STAGING
 -- ================================================================
 
-
 DROP TABLE IF EXISTS stg_inventaire CASCADE;
 
 CREATE TABLE stg_inventaire (
-    stg_id             SERIAL          PRIMARY KEY,
-    id                 TEXT,
-    type               TEXT,
-    materiau           TEXT,
-    lieu               TEXT,
-    latitude           TEXT,
-    longitude          TEXT,
-    date_installation  TEXT,
-    etat               TEXT,
-    remarques          TEXT
+    stg_id SERIAL PRIMARY KEY,
+    id TEXT,
+    type TEXT,
+    materiau TEXT,
+    lieu TEXT,
+    latitude TEXT,
+    longitude TEXT,
+    date_installation TEXT,
+    etat TEXT,
+    remarques TEXT
 );
-
 
 -- ================================================================
 -- ÉTAPE 2 — IMPORT CSV DANS LE STAGING
 -- ================================================================
 
-COPY stg_inventaire (id, type, materiau, lieu, latitude, longitude, date_installation, etat, remarques)
+COPY stg_inventaire (
+    id,
+    type,
+    materiau,
+    lieu,
+    latitude,
+    longitude,
+    date_installation,
+    etat,
+    remarques
+)
 FROM '/docker-data/inventaire_mobilier_clean.csv'
-WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'UTF8');
-
+WITH (
+        FORMAT csv,
+        HEADER true,
+        DELIMITER ';',
+        ENCODING 'UTF8'
+    );
 
 -- ================================================================
 -- ÉTAPE 3 — NETTOYAGE ET STANDARDISATION
@@ -273,32 +289,31 @@ WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'UTF8');
 -- 3a — TRIM global
 -- ----------------------------------------------------------------
 
-
 UPDATE stg_inventaire
 SET
-    id                = TRIM(id),
-    type              = TRIM(type),
-    materiau          = TRIM(materiau),
-    lieu              = TRIM(lieu),
-    latitude          = TRIM(latitude),
-    longitude         = TRIM(longitude),
+    id = TRIM(id),
+    type = TRIM(type),
+    materiau = TRIM(materiau),
+    lieu = TRIM(lieu),
+    latitude = TRIM(latitude),
+    longitude = TRIM(longitude),
     date_installation = TRIM(date_installation),
-    etat              = TRIM(etat),
-    remarques         = TRIM(remarques);
+    etat = TRIM(etat),
+    remarques = TRIM(remarques);
 
 -- ----------------------------------------------------------------
 -- ÉTAPE 3 — STANDARDISATION : CASE WHEN + LOWER + TRIM
 -- ----------------------------------------------------------------
 
- 
 UPDATE stg_inventaire
-SET type =
-    CASE LOWER(TRIM(type))
-        WHEN 'banc'        THEN 'Banc'
+SET
+    type = CASE LOWER(TRIM(type))
+        WHEN 'banc' THEN 'Banc'
         WHEN 'banc public' THEN 'Banc'
         ELSE COALESCE(INITCAP(TRIM(type)), NULL)
     END
-WHERE type IS NOT NULL;
+WHERE
+    type IS NOT NULL;
 
 -- on garde que les données des banc
 DELETE FROM stg_inventaire WHERE type != 'Banc';
@@ -310,16 +325,17 @@ DELETE FROM stg_inventaire WHERE type != 'Banc';
 -- Valeurs cibles après standardisation :
 --   'Bois' | 'Métal' | NULL
 -- ================================================================
- 
+
 UPDATE stg_inventaire
-SET materiau =
-    CASE LOWER(TRIM(materiau))
-    WHEN 'bois'  THEN 'Bois'
-    WHEN 'métal' THEN 'Métal'
-    WHEN 'metal' THEN 'Métal'
-    ELSE COALESCE(materiau, NULL)
-END
-WHERE materiau IS NOT NULL;
+SET
+    materiau = CASE LOWER(TRIM(materiau))
+        WHEN 'bois' THEN 'Bois'
+        WHEN 'métal' THEN 'Métal'
+        WHEN 'metal' THEN 'Métal'
+        ELSE COALESCE(materiau, NULL)
+    END
+WHERE
+    materiau IS NOT NULL;
 
 -- ----------------------------------------------------------------
 -- ÉTAPE 2 — FORMAT DD.MM.YYYY  →  YYYY-MM-DD
@@ -332,15 +348,19 @@ WHERE materiau IS NOT NULL;
 --   SPLIT_PART('08.04.2019', '.', 3) → '2019' (année)
 -- CONCAT réassemble dans l'ordre YYYY-MM-DD.
 -- ----------------------------------------------------------------
- 
-UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(date_installation, '.', 3), '-',   -- YYYY
-        SPLIT_PART(date_installation, '.', 2), '-',   -- MM
-        SPLIT_PART(date_installation, '.', 1)         -- DD
-    )
-WHERE date_installation LIKE '__.__.____';            -- wildcard : 2+2+4 chiffres séparés par des points
 
+UPDATE stg_inventaire
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(date_installation, '.', 3),
+        '-', -- YYYY
+        SPLIT_PART(date_installation, '.', 2),
+        '-', -- MM
+        SPLIT_PART(date_installation, '.', 1) -- DD
+    )
+WHERE
+    date_installation LIKE '__.__.____';
+-- wildcard : 2+2+4 chiffres séparés par des points
 
 -- ----------------------------------------------------------------
 -- ÉTAPE 3 — FORMAT YYYY seul  →  YYYY-01-01
@@ -351,12 +371,14 @@ WHERE date_installation LIKE '__.__.____';            -- wildcard : 2+2+4 chiffr
 -- (pour ne pas attraper accidentellement un YYYY-MM-DD tronqué).
 -- CONCAT ajoute simplement '-01-01'.
 -- ----------------------------------------------------------------
- 
-UPDATE stg_inventaire
-SET date_installation = CONCAT(date_installation, '-01-01')
-WHERE date_installation LIKE '____'                   -- wildcard : exactement 4 caractères
-  AND date_installation NOT LIKE '%-%';               -- exclut tout ce qui contient un tiret
 
+UPDATE stg_inventaire
+SET
+    date_installation = CONCAT(date_installation, '-01-01')
+WHERE
+    date_installation LIKE '____' -- wildcard : exactement 4 caractères
+    AND date_installation NOT LIKE '%-%';
+-- exclut tout ce qui contient un tiret
 
 -- ----------------------------------------------------------------
 -- ÉTAPE 5 — FORMAT 'Mois FR YYYY'  →  YYYY-MM-01
@@ -372,91 +394,174 @@ WHERE date_installation LIKE '____'                   -- wildcard : exactement 4
 -- Le wildcard '_' gère les caractères accentués qui peuvent
 -- varier selon l'encodage du CSV (é, û, etc.).
 -- ----------------------------------------------------------------
- 
+
 -- janvier
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-01-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-01-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'janvier %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'janvier %';
+
 -- février  (wildcard _ gère le é selon encodage)
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-02-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-02-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'f_vrier %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'f_vrier %';
+
 -- mars
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-03-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-03-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'mars %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'mars %';
+
 -- avril
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-04-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-04-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'avril %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'avril %';
+
 -- mai
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-05-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-05-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'mai %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'mai %';
+
 -- juin
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-06-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-06-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'juin %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'juin %';
+
 -- juillet
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-07-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-07-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'juillet %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'juillet %';
+
 -- août  (wildcard _ gère le û selon encodage)
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-08-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-08-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'ao_t %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'ao_t %';
+
 -- septembre
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-09-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-09-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'septembre %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'septembre %';
+
 -- octobre
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-10-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-10-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'octobre %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'octobre %';
+
 -- novembre
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-11-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-11-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'novembre %';
- 
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'novembre %';
+
 -- décembre  (wildcard _ gère le é selon encodage)
 UPDATE stg_inventaire
-SET date_installation = CONCAT(
-        SPLIT_PART(TRIM(date_installation), ' ', 2), '-12-01'
+SET
+    date_installation = CONCAT(
+        SPLIT_PART(
+            TRIM(date_installation),
+            ' ',
+            2
+        ),
+        '-12-01'
     )
-WHERE LOWER(TRIM(date_installation)) LIKE 'd_cembre %';
-
+WHERE
+    LOWER(TRIM(date_installation)) LIKE 'd_cembre %';
 
 -- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
@@ -465,36 +570,43 @@ WHERE LOWER(TRIM(date_installation)) LIKE 'd_cembre %';
 -- Base de données : InfraDon (PostgreSQL)
 -- ================================================================
 
-
-
-
 -- ================================================================
 -- ÉTAPE 1 — CRÉATION DE LA TABLE DE STAGING
 -- ================================================================
 
-
 DROP TABLE IF EXISTS stg_intervention CASCADE;
 
 CREATE TABLE stg_intervention (
-    stg_id             SERIAL PRIMARY KEY,
-    date                 TEXT,
-    objet               TEXT,
-    type_intervention           TEXT,
-    technicien               TEXT,
-    duree           TEXT,
-    cout_materiel          TEXT,
-    remarques          TEXT
+    stg_id SERIAL PRIMARY KEY,
+    date TEXT,
+    objet TEXT,
+    type_intervention TEXT,
+    technicien TEXT,
+    duree TEXT,
+    cout_materiel TEXT,
+    remarques TEXT
 );
-
 
 -- ================================================================
 -- ÉTAPE 2 — IMPORT CSV DANS LE STAGING
 -- ================================================================
 
-COPY stg_intervention (date, objet, type_intervention, technicien, duree, cout_materiel, remarques)
+COPY stg_intervention (
+    date,
+    objet,
+    type_intervention,
+    technicien,
+    duree,
+    cout_materiel,
+    remarques
+)
 FROM '/docker-data/interventions.csv'
-WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'UTF8');
-
+WITH (
+        FORMAT csv,
+        HEADER true,
+        DELIMITER ';',
+        ENCODING 'UTF8'
+    );
 
 -- ================================================================
 -- ÉTAPE 3 — NETTOYAGE ET STANDARDISATION
@@ -504,23 +616,21 @@ WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'UTF8');
 -- 3a — TRIM global
 -- ----------------------------------------------------------------
 
-
 UPDATE stg_intervention
 SET
-    date                = TRIM(date),
-    objet              = TRIM(objet),
-    type_intervention          = TRIM(type_intervention),
-    technicien              = TRIM(technicien),
-    duree          = TRIM(duree),
-    cout_materiel         = TRIM(cout_materiel),
+    date = TRIM(date),
+    objet = TRIM(objet),
+    type_intervention = TRIM(type_intervention),
+    technicien = TRIM(technicien),
+    duree = TRIM(duree),
+    cout_materiel = TRIM(cout_materiel),
     remarques = TRIM(remarques);
 
-
 -- on garde que les données des banc
-DELETE
-FROM stg_intervention
-WHERE objet NOT LIKE '%banc%'
-   AND objet NOT LIKE '%Banc%';
+DELETE FROM stg_intervention
+WHERE
+    objet NOT LIKE '%banc%'
+    AND objet NOT LIKE '%Banc%';
 
 -- ----------------------------------------------------------------
 -- ÉTAPE 3 — STANDARDISATION : CASE WHEN + LOWER + TRIM
@@ -529,23 +639,35 @@ WHERE objet NOT LIKE '%banc%'
 -- JM -> Jean-Marque Bonvin
 -- p.Alves -> Alves Pedro
 -- ----------------------------------------------------------------
- 
+
 UPDATE stg_intervention
-SET objet =
-    CASE
-        WHEN LOWER(objet) LIKE 'banc public%'
-            THEN 'Banc ' || INITCAP(SUBSTRING(objet FROM 12))
-        WHEN LOWER(objet) LIKE 'banc%'
-            THEN 'Banc ' || INITCAP(SUBSTRING(objet FROM 5))
+SET
+    objet = CASE
+        WHEN LOWER(objet) LIKE 'banc public%' THEN 'Banc ' || INITCAP(
+            SUBSTRING(
+                objet
+                FROM 12
+            )
+        )
+        WHEN LOWER(objet) LIKE 'banc%' THEN 'Banc ' || INITCAP(
+            SUBSTRING(
+                objet
+                FROM 5
+            )
+        )
         ELSE COALESCE(INITCAP(objet), NULL)
     END;
 
 UPDATE stg_intervention
-SET type_intervention = COALESCE(INITCAP(TRIM(type_intervention)), NULL);
+SET
+    type_intervention = COALESCE(
+        INITCAP(TRIM(type_intervention)),
+        NULL
+    );
 
 UPDATE stg_intervention
-SET technicien =
-    CASE LOWER(technicien)
+SET
+    technicien = CASE LOWER(technicien)
         WHEN 'jm' THEN 'Bonvin Jean-Marc'
         WHEN 'jean-marc' THEN 'Bonvin Jean-Marc'
         WHEN 'jean-marc bonvin' THEN 'Bonvin Jean-Marc'
@@ -565,15 +687,19 @@ SET technicien =
 --   SPLIT_PART('08.04.2019', '.', 3) → '2019' (année)
 -- CONCAT réassemble dans l'ordre YYYY-MM-DD.
 -- ----------------------------------------------------------------
- 
-UPDATE stg_intervention
-SET date = CONCAT(
-        SPLIT_PART(date, '.', 3), '-',   -- YYYY
-        SPLIT_PART(date, '.', 2), '-',   -- MM
-        SPLIT_PART(date, '.', 1)         -- DD
-    )
-WHERE date LIKE '__.__.____';            -- wildcard : 2+2+4 chiffres séparés par des points
 
+UPDATE stg_intervention
+SET
+    date = CONCAT(
+        SPLIT_PART(date, '.', 3),
+        '-', -- YYYY
+        SPLIT_PART(date, '.', 2),
+        '-', -- MM
+        SPLIT_PART(date, '.', 1) -- DD
+    )
+WHERE
+    date LIKE '__.__.____';
+-- wildcard : 2+2+4 chiffres séparés par des points
 
 -- ----------------------------------------------------------------
 -- ÉTAPE 2 — FORMAT durée
@@ -582,8 +708,8 @@ WHERE date LIKE '__.__.____';            -- wildcard : 2+2+4 chiffres séparés 
 -- 2h30 -> 2,5
 -- ----------------------------------------------------------------
 UPDATE stg_intervention
-SET duree =
-    CASE LOWER(duree)
+SET
+    duree = CASE LOWER(duree)
         WHEN '30 min' THEN '0,5'
         WHEN '1h30' THEN '1,5'
         WHEN '3h' THEN '3'
@@ -600,8 +726,8 @@ SET duree =
 -- 120.- -> 120,00
 -- ----------------------------------------------------------------
 UPDATE stg_intervention
-SET duree =
-    CASE LOWER(duree)
+SET
+    duree = CASE LOWER(duree)
         WHEN '30 min' THEN '0,5'
         WHEN '1h30' THEN '1,5'
         WHEN '3h' THEN '3'
@@ -613,17 +739,20 @@ SET duree =
     END;
 
 UPDATE stg_intervention
-SET cout_materiel =
-    CASE 
-        WHEN LOWER(cout_materiel) IN ('gratuit', 'garantie')
-            THEN '0'
-        ELSE
-            TRIM(
+SET
+    cout_materiel = CASE
+        WHEN LOWER(cout_materiel) IN ('gratuit', 'garantie') THEN '0'
+        ELSE TRIM(
+            REPLACE(
                 REPLACE(
-                    REPLACE(
-                        UPPER(cout_materiel), 
-                    'CHF', ''), 
-                '.-', '')
+                    UPPER(cout_materiel),
+                    'CHF',
+                    ''
+                ),
+                '.-',
+                ''
             )
+        )
     END
-WHERE cout_materiel IS NOT NULL;
+WHERE
+    cout_materiel IS NOT NULL;

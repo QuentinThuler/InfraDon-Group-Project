@@ -98,7 +98,7 @@ create table signalements (
      date date not null,
      description varchar(1000) not null,
      signal_par varchar(50),
-     id_immmobilier integer not null,
+     id_mobilier integer not null,
      id_urgence integer,
      id_statut integer,
      constraint ID_signalements primary key (id));
