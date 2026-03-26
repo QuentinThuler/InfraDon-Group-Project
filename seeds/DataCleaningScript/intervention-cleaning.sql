@@ -154,15 +154,18 @@ SET duree =
 
 UPDATE stg_intervention
 SET cout_materiel =
-    CASE LOWER(cout_materiel)
-        WHEN 'gratuit'
+    CASE 
+        WHEN LOWER(cout_materiel) IN ('gratuit', 'garantie')
             THEN '0'
-        WHEN 'garantie'
-            THEN '0'
---        WHEN cout_materiel LIKE '%.-' THEN REPLACE(cout_materiel, '.-', '')::text
---        WHEN cout_materiel LIKE 'chf%'
-            THEN ''
-        ELSE COALESCE(INITCAP(cout_materiel), NULL)
-    END;
+        ELSE
+            TRIM(
+                REPLACE(
+                    REPLACE(
+                        UPPER(cout_materiel), 
+                    'CHF', ''), 
+                '.-', '')
+            )
+    END
+WHERE cout_materiel IS NOT NULL;
 
 SELECT * from stg_intervention;
