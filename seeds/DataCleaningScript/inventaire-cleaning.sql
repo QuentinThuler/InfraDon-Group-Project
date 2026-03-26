@@ -1,7 +1,7 @@
 -- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
--- Fichier source : inventaire_mobilier.csv
+-- Fichier source : inventaire_mobilier_clean.csv
 -- Base de données : InfraDon (PostgreSQL)
 -- ================================================================
 
