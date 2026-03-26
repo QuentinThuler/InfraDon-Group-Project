@@ -279,7 +279,7 @@ SET
     id                = TRIM(id),
     type              = TRIM(type),
     materiau          = TRIM(materiau),
-    lieu              = TRIM(lieu),
+    lieu              = INITCAP(TRIM(lieu)),
     latitude          = TRIM(latitude),
     longitude         = TRIM(longitude),
     date_installation = TRIM(date_installation),
