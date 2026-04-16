@@ -1,4 +1,4 @@
--- Active: 1772721152986@@127.0.0.1@5432@infradon@public
+-- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- *********************************************
 -- * SQL PostgreSQL generation                 
 -- *--------------------------------------------
@@ -8,7 +8,6 @@
 -- * LUN file: C:\Users\Sam\OneDrive - Education Vaud\Bureau\Etude-heig\Semestre2\infraDonnée\comem-infradon\modélisation\InfraDonnee.lun 
 -- * Schema: MLD/1 
 -- ********************************************* 
-
 
 -- Tables Section
 -- _____________ 
@@ -24,11 +23,11 @@ create table fournisseurs (
      remarque varchar(500),
      constraint ID_fournisseurs primary key (id));
 
+-- description surrpimée car pas demandée
 create table techniciens (
      id serial not null,
      nom varchar(50),
      prenom varchar(50) not null,
-     description varchar(50) not null,
      constraint ID_techniciens primary key (id));
 
 create table type_etats (

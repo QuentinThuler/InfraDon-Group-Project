@@ -24,7 +24,7 @@ SELECT DISTINCT etat
 FROM stg_inventaire
 WHERE etat IS NOT NULL;
 
--- TO DO Insert mobilier
+-- Insert mobilier from stg_inventaire
 INSERT INTO mobiliers (
     latitude,
     longitude,
@@ -53,7 +53,4 @@ JOIN type_lieux tl       ON LOWER(TRIM(tl.nom)) = LOWER(TRIM(s.lieu))
 JOIN type_materiaux tmat ON LOWER(TRIM(tmat.nom)) = LOWER(TRIM(s.materiau))
 -- Résolution FK état
 JOIN type_etats te       ON LOWER(TRIM(te.nom)) = LOWER(TRIM(s.etat));
-
-
-SELECT * from mobiliers;
 
