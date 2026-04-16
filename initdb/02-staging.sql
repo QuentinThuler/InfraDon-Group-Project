@@ -1,4 +1,4 @@
--- Active: 1772721397266@@127.0.0.1@5432@infradon
+-- Active: 1772721152986@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
 -- Fichier source : signalement-cleaning.csv
@@ -292,12 +292,12 @@ WITH (
 
 UPDATE stg_inventaire
 SET
-    id                = TRIM(id),
-    type              = TRIM(type),
-    materiau          = TRIM(materiau),
-    lieu              = INITCAP(TRIM(lieu)),
-    latitude          = TRIM(latitude),
-    longitude         = TRIM(longitude),
+    id = TRIM(id),
+    type = TRIM(type),
+    materiau = TRIM(materiau),
+    lieu = TRIM(lieu),
+    latitude = TRIM(latitude),
+    longitude = TRIM(longitude),
     date_installation = TRIM(date_installation),
     etat = TRIM(etat),
     remarques = TRIM(remarques);
@@ -738,6 +738,7 @@ SET
         WHEN 'une journée' THEN '8'
         ELSE COALESCE(INITCAP(duree), NULL)
     END;
+
 UPDATE stg_intervention
 SET
     cout_materiel = CASE
