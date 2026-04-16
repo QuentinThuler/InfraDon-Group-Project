@@ -92,7 +92,7 @@ DROP TABLE IF EXISTS stg_signalements CASCADE;
 CREATE TABLE stg_signalements (
     stg_id SERIAL PRIMARY KEY,
     date TEXT,
-    signal_par TEXT,
+    signale_par TEXT,
     id_mobilier INT,
     objet TEXT,
     description TEXT,
@@ -257,6 +257,7 @@ CREATE TABLE stg_inventaire (
     etat TEXT,
     remarques TEXT
 );
+
 
 -- ================================================================
 -- ÉTAPE 2 — IMPORT CSV DANS LE STAGING
