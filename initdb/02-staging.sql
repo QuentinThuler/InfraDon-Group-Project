@@ -1,4 +1,4 @@
--- Active: 1772721152986@@127.0.0.1@5432@infradon
+-- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ================================================================
 -- SCRIPT DE STAGING, NETTOYAGE ET STANDARDISATION
 -- Fichier source : signalement-cleaning.csv
@@ -737,7 +737,6 @@ SET
         WHEN 'une journée' THEN '8'
         ELSE COALESCE(INITCAP(duree), NULL)
     END;
-
 UPDATE stg_intervention
 SET
     cout_materiel = CASE
