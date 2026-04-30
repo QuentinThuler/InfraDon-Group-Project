@@ -24,7 +24,6 @@ SELECT DISTINCT etat
 FROM stg_inventaire
 WHERE etat IS NOT NULL;
 
-
 INSERT INTO mobiliers (
     latitude,
     longitude,
