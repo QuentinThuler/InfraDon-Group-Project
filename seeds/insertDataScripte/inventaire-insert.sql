@@ -1,3 +1,4 @@
+-- Active: 1772721397266@@127.0.0.1@5432@infradon
 SELECT * from stg_inventaire;
 
 -- insert lieu into table type-lieux from stg_inventaire

@@ -168,3 +168,35 @@ SET cout_materiel =
     END
 WHERE cout_materiel IS NOT NULL;
 
+-- Créer une table temporaire avec l'extraction propre
+CREATE TABLE stg_intervention_parsed AS
+SELECT 
+    s.*,
+    -- Extraction du type de mobilier
+    CASE 
+        -- "Le Banc Public Devant..." -> "Banc"
+        WHEN s.objet ~* '^Le .* (Public|Devant|Près)' THEN 
+            TRIM(REGEXP_REPLACE(REGEXP_REPLACE(s.objet, '^Le ', '', 'i'), ' (Public|Devant|Près).*$', '', 'i'))
+        -- "Banc Public Près De..." -> "Banc"
+        WHEN s.objet ~* '^[A-Za-z]+ Public (Près|Devant)' THEN 
+            TRIM(SPLIT_PART(s.objet, ' Public', 1))
+        -- "Banc Près De..." -> "Banc"
+        WHEN s.objet ~* '^[A-Za-z]+ (Près|Devant)' THEN 
+            TRIM(REGEXP_REPLACE(s.objet, ' (Près|Devant).*$', '', 'i'))
+        -- "Banc Place De..." -> "Banc" (cas par défaut)
+        ELSE 
+            TRIM(SPLIT_PART(s.objet, ' ', 1))
+    END as type_mobilier_clean,
+    -- Extraction du lieu
+    CASE 
+        -- "... Devant Chemin De Maillefer" -> "Chemin De Maillefer"
+        WHEN s.objet ~* 'Devant ' THEN 
+            TRIM(REGEXP_REPLACE(s.objet, '^.*Devant ', '', 'i'))
+        -- "... Près De Y-Parc" -> "Y-Parc"
+        WHEN s.objet ~* 'Près De ' THEN 
+            TRIM(REGEXP_REPLACE(s.objet, '^.*Près De ', '', 'i'))
+        --"Banc Place De La Gare" -> "Place De La Gare"
+        ELSE 
+            TRIM(REGEXP_REPLACE(s.objet, '^(Le |La |L'')?[A-Za-z]+ (Public )?', '', 'i'))
+    END as type_lieu_clean
+FROM stg_intervention s;

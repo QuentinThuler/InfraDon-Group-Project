@@ -1,2 +1,0 @@
--- Active: 1772721152986@@127.0.0.1@5432
-SELECT * from stg_signalements

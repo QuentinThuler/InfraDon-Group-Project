@@ -11,6 +11,8 @@
 
 -- Tables Section
 -- _____________ 
+
+BEGIN;
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 
@@ -76,7 +78,6 @@ create table mobiliers (
      id_type_materiaux integer,
      id_type_etat integer,
      constraint ID_mobiliers primary key (id));
-
 create table interventions (
      id serial not null,
      date date not null,
@@ -144,7 +145,7 @@ alter table type_mobilier_fournisseur add constraint FKser_fou_FK
      references fournisseurs;
 
 alter table signalements add constraint FKimpacter_FK
-     foreign key (id_immmobilier)
+     foreign key (id_mobilier)
      references mobiliers;
 
 alter table signalements add constraint FKdonner_FK
@@ -184,10 +185,11 @@ create index FKser_fou_IND
      on type_mobilier_fournisseur (id_fournisseur);
 
 create index FKimpacter_IND
-     on signalements (id_immmobilier);
+     on signalements (id_mobilier);
 
 create index FKdonner_IND
      on signalements (id_urgence);
 
 create index FKavoir_IND
      on signalements (id_statut);
+COMMIT;
