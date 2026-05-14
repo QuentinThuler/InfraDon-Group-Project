@@ -72,7 +72,7 @@ INSERT INTO type_interventions (nom)
 SELECT DISTINCT type_intervention 
 FROM stg_intervention;
 
--- TO finish Insert intervention from stg_intervention
+-- intervention from stg_intervention
 INSERT INTO interventions (
     date,
     duree,

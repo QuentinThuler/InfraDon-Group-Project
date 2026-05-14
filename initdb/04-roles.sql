@@ -1,3 +1,4 @@
+-- Active: 1772721397266@@127.0.0.1@5432@infradon
 -- ÉTAPE 1 : CRÉATION DES RÔLES
 
 -- Rôle CITOYEN : Lecture seule sur les données publiques

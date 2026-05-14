@@ -5,7 +5,6 @@
 -- * DB-MAIN version: 11.0.2              
 -- * Generator date: Sep 14 2021              
 -- * Generation date: Thu Mar  5 13:45:25 2026 
--- * LUN file: C:\Users\Sam\OneDrive - Education Vaud\Bureau\Etude-heig\Semestre2\infraDonnée\comem-infradon\modélisation\InfraDonnee.lun 
 -- * Schema: MLD/1 
 -- ********************************************* 
 
